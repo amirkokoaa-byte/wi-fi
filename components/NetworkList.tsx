@@ -20,28 +20,47 @@ const NetworkList: React.FC<NetworkListProps> = ({ onSelectNetwork, selectedSsid
   const [scanning, setScanning] = useState(false);
   const [manualSsid, setManualSsid] = useState('');
 
+  // استعادة البيانات من الذاكرة المحلية عند بدء التشغيل
+  useEffect(() => {
+    const saved = localStorage.getItem('captured_networks');
+    if (saved) {
+      setNetworks(JSON.parse(saved));
+    } else {
+      simulateScan();
+    }
+  }, []);
+
+  // حفظ البيانات تلقائياً عند تغيير القائمة
+  useEffect(() => {
+    localStorage.setItem('captured_networks', JSON.stringify(networks));
+  }, [networks]);
+
   const simulateScan = () => {
     setScanning(true);
     setTimeout(() => {
       const mockNetworks: Network[] = [
-        { id: '1', ssid: 'Home_Fiber_5G', strength: 95, security: 'WPA3' },
-        { id: '3', ssid: 'TP-Link_2841', strength: 40, security: 'WPA2' },
+        { id: '1', ssid: 'Fiber_Home_EXT', strength: 92, security: 'WPA3' },
+        { id: '2', ssid: 'TP-Link_Guest_Area', strength: 45, security: 'WPA2' },
+        { id: '3', ssid: 'HUAWEI-5G-B311', strength: 78, security: 'WPA2' },
       ];
+      
       setNetworks(prev => {
-        const realOnes = prev.filter(n => n.isReal);
-        return [...realOnes, ...mockNetworks];
+        const manualOnes = prev.filter(n => n.isReal);
+        // نمنع التكرار
+        const newOnes = mockNetworks.filter(mn => !manualOnes.find(mo => mo.ssid === mn.ssid));
+        return [...manualOnes, ...newOnes];
       });
       setScanning(false);
-    }, 1500);
+    }, 2000);
   };
 
   const handleAddManual = () => {
-    if (!manualSsid) return;
+    if (!manualSsid || networks.find(n => n.ssid === manualSsid)) return;
     const newNet: Network = {
-      id: Date.now().toString(),
+      id: `real_${Date.now()}`,
       ssid: manualSsid,
-      strength: 100,
-      security: 'WPA2/WPA3',
+      strength: Math.floor(Math.random() * (100 - 80 + 1)) + 80,
+      security: 'WPA2/AES',
       isReal: true
     };
     setNetworks([newNet, ...networks]);
@@ -49,89 +68,112 @@ const NetworkList: React.FC<NetworkListProps> = ({ onSelectNetwork, selectedSsid
     onSelectNetwork(manualSsid);
   };
 
-  useEffect(() => {
+  const clearStorage = () => {
+    localStorage.removeItem('captured_networks');
+    setNetworks([]);
     simulateScan();
-  }, []);
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative overflow-hidden">
+      {scanning && <div className="absolute inset-0 pointer-events-none z-10 scan-line"></div>}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <CursorArrowRaysIcon className="w-6 h-6 text-blue-400" />
-            التقاط الأهداف القريبة
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-blue-400">
+            <CursorArrowRaysIcon className="w-6 h-6" />
+            رادار التقاط الأهداف
           </h2>
-          <p className="text-slate-400 text-sm">قم بالتقاط شبكة حقيقية من محيطك للبدء</p>
+          <p className="text-slate-500 text-sm">تم العثور على {networks.length} هدف نشط في النطاق</p>
         </div>
-        <button 
-          onClick={simulateScan}
-          disabled={scanning}
-          className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 px-4 py-2 rounded-lg transition-all text-sm border border-slate-600"
-        >
-          <ArrowPathIcon className={`w-4 h-4 ${scanning ? 'animate-spin' : ''}`} />
-          تحديث الرادار
-        </button>
+        <div className="flex gap-2">
+           <button 
+            onClick={clearStorage}
+            className="text-xs text-red-400 hover:text-red-300 transition-colors"
+          >
+            مسح القائمة
+          </button>
+          <button 
+            onClick={simulateScan}
+            disabled={scanning}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 px-4 py-2 rounded-xl transition-all text-sm border border-slate-700"
+          >
+            <ArrowPathIcon className={`w-4 h-4 ${scanning ? 'animate-spin' : ''}`} />
+            تحديث المسح
+          </button>
+        </div>
       </div>
 
-      {/* Manual Capture Input */}
-      <div className="bg-blue-600/10 border border-blue-500/30 p-4 rounded-xl flex flex-col md:flex-row gap-3">
-        <div className="flex-grow">
-          <input 
-            type="text"
-            value={manualSsid}
-            onChange={(e) => setManualSsid(e.target.value)}
-            placeholder="أدخل اسم الشبكة التي تظهر في هاتفك..."
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+      <div className="bg-[#0a0a0a] border border-blue-500/20 p-5 rounded-2xl shadow-inner group transition-all hover:border-blue-500/40">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-grow">
+            <input 
+              type="text"
+              value={manualSsid}
+              onChange={(e) => setManualSsid(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddManual()}
+              placeholder="اكتب اسم الشبكة الحقيقية هنا..."
+              className="w-full bg-[#111] border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all font-mono text-sm"
+            />
+          </div>
+          <button 
+            onClick={handleAddManual}
+            className="bg-blue-600 hover:bg-blue-500 px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-900/20"
+          >
+            <PlusIcon className="w-5 h-5" />
+            التقاط الآن
+          </button>
         </div>
-        <button 
-          onClick={handleAddManual}
-          className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all whitespace-nowrap"
-        >
-          <PlusIcon className="w-5 h-5" />
-          التقاط الشبكة الآن
-        </button>
+        <p className="text-[10px] text-slate-500 mt-2 text-center">
+          * أدخل اسم الشبكة كما يظهر في إعدادات الواي فاي بجهازك
+        </p>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {networks.length === 0 && !scanning && (
-          <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
-            لا توجد أهداف ملتقطة حالياً
+          <div className="text-center py-20 text-slate-700 border-2 border-dashed border-slate-900 rounded-2xl">
+            الرادار فارغ حالياً.. ابدأ بالمسح أو الإضافة اليدوية
           </div>
         )}
         {networks.map((net) => (
           <div 
             key={net.id} 
             onClick={() => onSelectNetwork(net.ssid)}
-            className={`cursor-pointer bg-slate-900/80 p-4 rounded-xl border transition-all flex items-center justify-between group ${
-              selectedSsid === net.ssid ? 'border-blue-500 ring-1 ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-slate-700 hover:border-slate-500'
+            className={`cursor-pointer p-4 rounded-2xl border transition-all flex items-center justify-between group ${
+              selectedSsid === net.ssid ? 'bg-blue-600/10 border-blue-500 ring-1 ring-blue-500' : 'bg-[#0c0c0c] border-slate-800 hover:border-slate-600'
             }`}
           >
             <div className="flex items-center gap-4">
-              <SignalIcon className={`w-6 h-6 ${net.strength > 70 ? 'text-green-500' : 'text-yellow-500'}`} />
+              <div className={`p-2 rounded-lg ${net.strength > 70 ? 'bg-green-500/10' : 'bg-yellow-500/10'}`}>
+                <SignalIcon className={`w-6 h-6 ${net.strength > 70 ? 'text-green-500' : 'text-yellow-500'}`} />
+              </div>
               <div>
-                <h3 className="font-bold flex items-center gap-2">
+                <h3 className="font-bold flex items-center gap-2 text-slate-200">
                   {net.ssid}
-                  {net.isReal && <span className="bg-blue-500 text-[10px] px-2 py-0.5 rounded text-white uppercase">Real Target</span>}
+                  {net.isReal && <span className="bg-blue-500/20 text-blue-400 text-[9px] px-2 py-0.5 rounded-full border border-blue-500/30 font-mono">REAL_TARGET</span>}
                 </h3>
-                <span className="text-xs text-slate-500">الحماية: {net.security}</span>
+                <div className="flex gap-3 mt-1">
+                   <span className="text-[10px] text-slate-500 flex items-center gap-1 uppercase">
+                    <LockClosedIcon className="w-3 h-3" /> {net.security}
+                   </span>
+                   <span className="text-[10px] text-slate-500">POWER: {net.strength}%</span>
+                </div>
               </div>
             </div>
-            {selectedSsid === net.ssid ? (
-              <span className="text-blue-400 text-xs font-bold animate-pulse">تم التحديد للعملية...</span>
-            ) : (
-              <div className="bg-slate-800 px-3 py-1 rounded text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                اضغط لتحديد الهدف
+            {selectedSsid === net.ssid && (
+              <div className="flex flex-col items-end">
+                <span className="text-blue-400 text-[10px] font-bold animate-pulse">DEPLOYED</span>
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 shadow-[0_0_8px_#3b82f6]"></div>
               </div>
             )}
           </div>
         ))}
       </div>
 
-      <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl">
-        <p className="text-slate-400 text-[11px] leading-relaxed flex items-start gap-2">
-          <InformationCircleIcon className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-          بما أن المتصفح لا يسمح بالمسح التلقائي المباشر للواي فاي، نستخدم نظام "الالتقاط اليدوي" لتمكينك من ربط البرنامج بأي شبكة حقيقية حولك وتجربة قوة أمانها في المختبر.
+      <div className="bg-[#111] border border-slate-800 p-4 rounded-xl flex items-start gap-3">
+        <InformationCircleIcon className="w-5 h-5 text-blue-500 shrink-0" />
+        <p className="text-slate-500 text-[11px] leading-relaxed">
+          تنبيه: هذا النظام يعمل كمحاكي أمني (Sandbox). يتم تخزين بيانات الشبكات "الملتقطة" محلياً في متصفحك لضمان تجربة مستمرة. المتصفح لا يملك صلاحية التحكم في الهاردوير الحقيقي لدواعي الأمان.
         </p>
       </div>
     </div>

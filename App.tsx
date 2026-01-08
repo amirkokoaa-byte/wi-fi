@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheckIcon, 
   ExclamationTriangleIcon,
@@ -16,89 +16,118 @@ const App: React.FC = () => {
 
   const handleSelectNetwork = (ssid: string) => {
     setSelectedSsid(ssid);
-    setActiveTab('lab'); // الانتقال تلقائياً لمختبر التخمين عند اختيار شبكة
+    // تأخير بسيط للانتقال لزيادة الشعور بالواقعية
+    setTimeout(() => setActiveTab('lab'), 300);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-slate-200 selection:bg-blue-500/30">
+      {/* Glow Effect */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 blur-[120px] pointer-events-none"></div>
+
       {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-800 p-6 sticky top-0 z-50 shadow-2xl">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.4)]">
-              <ShieldCheckIcon className="w-8 h-8 text-white" />
+      <header className="bg-black/40 border-b border-white/5 p-4 md:p-6 sticky top-0 z-50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-600 blur-lg opacity-20 animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 p-2.5 rounded-xl shadow-xl shadow-blue-900/20">
+                <ShieldCheckIcon className="w-7 h-7 text-white" />
+              </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">رادار الشبكات الذكي</h1>
-              <p className="text-blue-400 text-xs font-mono">NETWORK SECURITY ANALYZER v2.1</p>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                محاكي الاختراق الأخلاقي
+                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded border border-white/10 text-slate-400 font-mono">v3.0.PRO</span>
+              </h1>
+              <p className="text-blue-500 text-[10px] font-mono tracking-widest uppercase">System Operational // Signal Intercept Active</p>
             </div>
           </div>
           
-          <nav className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <nav className="flex bg-white/5 p-1 rounded-2xl border border-white/5 backdrop-blur-md">
             <button 
               onClick={() => setActiveTab('networks')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center gap-2 ${activeTab === 'networks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+              className={`px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 text-sm font-medium ${activeTab === 'networks' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
             >
               <SignalIcon className="w-4 h-4" />
-              فحص الشبكات
+              الرادار
             </button>
             <button 
               onClick={() => setActiveTab('lab')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center gap-2 ${activeTab === 'lab' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+              className={`px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 text-sm font-medium ${activeTab === 'lab' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
             >
               <CpuChipIcon className="w-4 h-4" />
-              مختبر التخمين
+              المختبر
             </button>
             <button 
               onClick={() => setActiveTab('tips')}
-              className={`px-6 py-2 rounded-lg transition-all flex items-center gap-2 ${activeTab === 'tips' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+              className={`px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 text-sm font-medium ${activeTab === 'tips' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white'}`}
             >
               <InformationCircleIcon className="w-4 h-4" />
-              نصائح الحماية
+              الأمان
             </button>
           </nav>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow max-w-5xl mx-auto w-full p-6">
-        <div className="bg-slate-900/40 rounded-3xl p-4 md:p-8 backdrop-blur-md border border-slate-800 shadow-inner">
-          {activeTab === 'networks' && <NetworkList onSelectNetwork={handleSelectNetwork} selectedSsid={selectedSsid} />}
-          {activeTab === 'lab' && <PasswordLab targetSsid={selectedSsid} />}
-          {activeTab === 'tips' && (
-            <div className="space-y-6 animate-fade-in text-right">
-              <h2 className="text-2xl font-bold flex items-center gap-2 mb-6">
-                <InformationCircleIcon className="w-7 h-7 text-blue-400" />
-                دليلك لحماية خصوصيتك الرقمية
-              </h2>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-blue-500/50 transition-colors">
-                  <h3 className="text-lg font-bold text-blue-300 mb-2">تفعيل WPA3-SAE</h3>
-                  <p className="text-slate-400 text-sm">أحدث معيار أمان يمنع الهجمات التي تحاول تخمين كلمات المرور حتى لو كانت قصيرة.</p>
-                </div>
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 hover:border-blue-500/50 transition-colors">
-                  <h3 className="text-lg font-bold text-blue-300 mb-2">إلغاء تفعيل WPS</h3>
-                  <p className="text-slate-400 text-sm">خاصية (Wi-Fi Protected Setup) تعتبر ثغرة كلاسيكية تتيح الدخول بـ PIN سهل التخمين.</p>
-                </div>
-              </div>
+      <main className="flex-grow max-w-5xl mx-auto w-full p-4 md:p-8 relative">
+        <div className="bg-[#0a0a0a]/80 rounded-[2.5rem] p-6 md:p-10 backdrop-blur-2xl border border-white/5 shadow-2xl overflow-hidden relative">
+          {/* Active Status Pulse */}
+          <div className="absolute top-6 left-6 flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            <span className="text-[9px] font-mono text-green-500 uppercase tracking-widest">Live Monitor</span>
+          </div>
 
-              <div className="mt-8 bg-amber-900/20 border border-amber-500/30 p-6 rounded-2xl flex gap-4 items-start">
-                <ExclamationTriangleIcon className="w-10 h-10 text-amber-500 shrink-0" />
-                <div className="space-y-2">
-                  <p className="text-amber-200 font-bold underline">إخلاء مسؤولية قانوني:</p>
-                  <p className="text-amber-100/70 text-sm leading-relaxed">
-                    هذا البرنامج تم تطويره لأغراض **تعليمية وبحثية** فقط لتوضيح مخاطر كلمات المرور الضعيفة. استخدام هذه الأدوات لاختراق شبكات الغير دون إذن يعتبر جريمة يعاقب عليها القانون.
-                  </p>
+          <div className="mt-4">
+            {activeTab === 'networks' && <NetworkList onSelectNetwork={handleSelectNetwork} selectedSsid={selectedSsid} />}
+            {activeTab === 'lab' && <PasswordLab targetSsid={selectedSsid} />}
+            {activeTab === 'tips' && (
+              <div className="space-y-8 animate-fade-in text-right">
+                <div className="border-r-4 border-blue-600 pr-6">
+                  <h2 className="text-3xl font-bold text-white mb-2">بروتوكولات الحماية المتقدمة</h2>
+                  <p className="text-slate-500 text-sm">كيف تمنع هجمات التخمين التي يحاكيها هذا البرنامج؟</p>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-white/5 p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all group">
+                    <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <ShieldCheckIcon className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2 font-tajawal">تفعيل تشفير WPA3</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">يوفر WPA3 حماية ضد هجمات الـ Offline Dictionary Attacks حتى لو كانت كلمة المرور متوسطة القوة.</p>
+                  </div>
+                  <div className="bg-white/5 p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all group">
+                    <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <ExclamationTriangleIcon className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-2 font-tajawal">إيقاف خدمة WPS</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">أكبر ثغرة تتيح للبرامج تخمين الـ PIN في دقائق. تعطيلها يغلق باباً كبيراً أمام المخترقين.</p>
+                  </div>
+                </div>
+
+                <div className="mt-12 bg-amber-900/10 border border-amber-500/20 p-8 rounded-3xl flex flex-col md:flex-row gap-6 items-center">
+                  <div className="bg-amber-500/20 p-4 rounded-full">
+                    <ExclamationTriangleIcon className="w-10 h-10 text-amber-500" />
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="text-amber-500 font-bold text-xl font-tajawal">إخلاء مسؤولية أمني وقانوني</h4>
+                    <p className="text-amber-100/60 text-sm leading-relaxed font-tajawal">
+                      هذا المشروع "محاكي" تعليمي صُمم لإظهار مخاطر ضعف كلمات المرور. جميع العمليات التي تراها هي محاكاة برمجية آمنة (Simulation). 
+                      <span className="block mt-2 font-bold text-amber-400">تذكر دائماً: الوصول غير المصرح به لشبكات الآخرين هو فعل غير قانوني ويعد جريمة معلوماتية.</span>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
 
-      <footer className="bg-slate-950 p-6 border-t border-slate-900 text-center text-slate-600 text-xs">
-        &copy; {new Date().getFullYear()} مختبر تحليل الشبكات المتقدم - تم التطوير لغرض التوعية الأمنية.
+      <footer className="p-8 border-t border-white/5 text-center">
+        <p className="text-slate-600 text-[10px] font-mono uppercase tracking-[0.3em]">
+          End-to-End Encryption Mode // Research Purposes Only // {new Date().getFullYear()}
+        </p>
       </footer>
     </div>
   );
